@@ -5,18 +5,31 @@ require_once('..' . DIRECTORY_SEPARATOR . 'Model' . DIRECTORY_SEPARATOR . 'Base.
 class Tb_Usuario extends Base
 {
     private $id_usuario;
-    private $nm_usuario;
-    private $pwd_usuario;
-    private $novo_nome;
+    private $nm_tarefa;
+    private $txt_descricao;
+    private $dt_criacao;
+    private $status;
 
 
-    public function SetNovoNome($novo_nome) {
-        $this->novo_nome = $novo_nome;
-    }
 
-    public function GetNovoNome() {
-        return $this->novo_nome;
-    }
+
+    //Alterar esta tabela inteira para tb_tarefa correspondendo os campos da tabela do banco de dados.
+
+
+
+
+
+
+
+
+
+    // public function SetNovoNome($novo_nome) {
+    //     $this->novo_nome = $novo_nome;
+    // }
+
+    // public function GetNovoNome() {
+    //     return $this->novo_nome;
+    // }
 
     function __construct($p_banco)
     {

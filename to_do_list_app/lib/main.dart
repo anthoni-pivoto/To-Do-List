@@ -25,6 +25,7 @@ class CadastroScreen extends StatefulWidget{
 class _CadastroScreen extends State<CadastroScreen>{
   final TextEditingController _cadastro_usuarioController = TextEditingController();
   final TextEditingController _cadastro_senhaController = TextEditingController();
+  final TextEditingController _cadastro_emailController = TextEditingController();
 
   Future<void> _cadastrar() async{
     final url = Uri.parse('http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php');
@@ -33,6 +34,7 @@ class _CadastroScreen extends State<CadastroScreen>{
       body: {
         'oper' : 'Inserir',
         'nm_usuario' : _cadastro_usuarioController.text,
+        'em_email' : _cadastro_emailController.text,
         'pwd_usuario' : _cadastro_senhaController.text,
       },
     );
@@ -71,10 +73,16 @@ class _CadastroScreen extends State<CadastroScreen>{
               decoration: InputDecoration(labelText: 'Usuário'),
             ),
             TextField(
+              controller: _cadastro_emailController,
+              decoration: InputDecoration(labelText: 'Email'),
+              obscureText: true,
+            ),
+            TextField(
               controller: _cadastro_senhaController,
               decoration: InputDecoration(labelText: 'Senha'),
               obscureText: true,
             ),
+            
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _cadastrar,
@@ -93,7 +101,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _loginController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
 
   @override
@@ -105,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
       url,
       body: {
         'oper' : 'Login',
-        'nm_usuario': _loginController.text,
+        'em_email': _emailController.text,
         'pwd_usuario': _senhaController.text,
       },
     );
@@ -160,8 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextField(
-              controller: _loginController,
-              decoration: InputDecoration(labelText: 'Login'),
+              controller: _emailController,
+              decoration: InputDecoration(labelText: 'Email'),
             ),
             TextField(
               controller: _senhaController,
