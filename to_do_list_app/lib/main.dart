@@ -79,7 +79,6 @@ class _CadastroScreen extends State<CadastroScreen>{
             TextField(
               controller: _cadastro_emailController,
               decoration: InputDecoration(labelText: 'Email'),
-              obscureText: true,
             ),
             TextField(
               controller: _cadastro_senhaController,
@@ -128,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
     
     if (mensagem == 'ok') {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('id_usuario', responseData['id_usuario'].toString());
+    await prefs.setString('email', responseData['dados']['email'].toString());
     mensagem = 'Login realizado com sucesso!';
     } else {
       mensagem = 'Email ou senha inválidos';
@@ -149,15 +148,17 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
 
-    // Se o login for bem-sucedido, armazena o nickname com shared preferences e navega para a tela de perfil
+    // Se o login for bem-sucedido, armazena o email e nome com shared preferences e navega para a tela de perfil
     if (responseData['Mensagem'] == 'ok') {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('nickname', responseData['dados']['usuario']);
+      await prefs.setString('email', responseData['dados']['email'].toString());
+      await prefs.setString('usuario', responseData['dados']['usuario'].toString());
       
       Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => PerfilScreen(
         nomeUsuario: responseData['dados']['usuario'],
+        emailUsuario: responseData['dados']['email'],
         ),
       ),
       );
