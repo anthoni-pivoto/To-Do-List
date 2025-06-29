@@ -8,6 +8,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -18,6 +20,8 @@ class MyApp extends StatelessWidget {
 }
 
 class CadastroScreen extends StatefulWidget{
+  const CadastroScreen({super.key});
+
   @override
   _CadastroScreen createState() => _CadastroScreen();
 }
@@ -96,6 +100,8 @@ class _CadastroScreen extends State<CadastroScreen>{
 }
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -202,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
 class PerfilScreen extends StatefulWidget {
   final String nomeUsuario; // Torne o campo final
 
-  PerfilScreen({super.key, required this.nomeUsuario});
+  const PerfilScreen({super.key, required this.nomeUsuario});
 
   @override
   _PerfilScreenState createState() => _PerfilScreenState();
@@ -228,14 +234,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
   }
 
   Future<void> _editarUsuario() async {
-    final TextEditingController _novoNomeController = TextEditingController();
+    final TextEditingController novoNomeController = TextEditingController();
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Editar Usuário'),
         content: TextField(
-          controller: _novoNomeController,
+          controller: novoNomeController,
           decoration: InputDecoration(labelText: 'Novo Nome de Usuário'),
         ),
         actions: [
@@ -251,7 +257,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 body: {
                   'oper': 'Alterar',
                   'nm_usuario': _nomeUsuario,
-                  'novo_nome': _novoNomeController.text,
+                  'novo_nome': novoNomeController.text,
                 },
               );
 
@@ -276,7 +282,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
               if (data['Mensagem'] == 'Usuário atualizado com sucesso') {
                 setState(() {
-                  _nomeUsuario = _novoNomeController.text; // Atualize o estado local
+                  _nomeUsuario = novoNomeController.text; // Atualize o estado local
                 });
               }
             },

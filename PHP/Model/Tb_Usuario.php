@@ -5,6 +5,7 @@ require_once('..' . DIRECTORY_SEPARATOR . 'Model' . DIRECTORY_SEPARATOR . 'Base.
 class Tb_Usuario extends Base
 {
     private $id_usuario;
+    private $em_email;
     private $nm_usuario;
     private $pwd_usuario;
     private $novo_nome;
@@ -27,7 +28,10 @@ class Tb_Usuario extends Base
     {
         $this->nm_usuario = $p_NmUsuario;
     }
-
+    function SetEmail($p_Email)
+    {
+        $this->em_email = $p_Email;
+    }
     function SetIdUsuario($p_IdUsuario)
     {
         $this->id_usuario = $p_IdUsuario;
@@ -41,12 +45,12 @@ class Tb_Usuario extends Base
     public function verificaExistencia()
     {
         $consulta = $this->conexao->query(
-            "SELECT 1 FROM Tb_Usuario where id_usuario = ". $this->id_usuario);
+            "SELECT 1 FROM Tb_Usuario where em_email = ". $this->em_email);
 
         $ret = $consulta->fetch(PDO::FETCH_ASSOC);
         if (!$ret) 
         {
-            throw new Exception("Usuario nao Localizado");
+            throw new Exception("Email nao Localizado");
         }
 
         return $ret;
@@ -96,8 +100,8 @@ class Tb_Usuario extends Base
         catch (Exception $e) 
         {
       
-            $stmt = $this->conexao->prepare("INSERT INTO TB_USUARIO(id_usuario, nm_usuario,pwd_usuario) VALUES (nextval('seq_id_user'), :NmUsuario, :PwdUsuario)");
-           
+            $stmt = $this->conexao->prepare("INSERT INTO TB_USUARIO(id_usuario, nm_usuario,pwd_usuario, em_email) VALUES (nextval('seq_id_user'), :NmUsuario, :PwdUsuario, :email)");
+            $stmt->bindValue(':email', $this->em_email, PDO::PARAM_STR);        
             $stmt->bindValue(':NmUsuario' , $this->nm_usuario , PDO::PARAM_STR);
             $stmt->bindValue(':PwdUsuario' , $this->pwd_usuario , PDO::PARAM_STR);
 
