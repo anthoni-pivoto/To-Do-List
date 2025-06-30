@@ -1,13 +1,15 @@
 <?php
         ini_set('display_errors', '1');
         ini_set('display_startup_errors', '1');
-        // define o nível de relatório para todos os erros
         error_reporting(E_ALL);
-        
+
+        header("Access-Control-Allow-Origin: *");
+
         require_once __DIR__ . '/../Model/Tb_Usuario.php';
         require_once __DIR__ . '/../Model/Banco.php';
         
         $s_nm_usuario   =  isset($_REQUEST['nm_usuario'])?$_REQUEST['nm_usuario']:"";
+        $s_em_email   =  isset($_REQUEST['em_email'])?$_REQUEST['em_email']:"";
         $i_id_usuario   =  isset($_REQUEST['id_usuario'])?$_REQUEST['id_usuario']:"";
         $s_pwd_usuario = isset($_REQUEST['pwd_usuario'])?$_REQUEST['pwd_usuario']:"";
         $s_novo_nome = isset($_REQUEST['novo_nome']) ? $_REQUEST['novo_nome'] : "";
@@ -26,6 +28,7 @@
             $Tb_Usuario = new Tb_Usuario($banco);
 
             $Tb_Usuario->setOper($Oper);
+            $Tb_Usuario->SetEmail($s_em_email);
             $Tb_Usuario->SetNmUsuario($s_nm_usuario);
             $Tb_Usuario->SetIdUsuario($i_id_usuario);
             $Tb_Usuario->SetPwdUsuario($s_pwd_usuario);
@@ -66,7 +69,7 @@
             }   
             else
             {
-                echo $e->getMessage();
+                header('Content-Type: application/json');
             }
         }
           

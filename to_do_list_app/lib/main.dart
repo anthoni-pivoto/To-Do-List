@@ -12,58 +12,87 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Login',
-      home: LoginScreen(),
-    );
+    return MaterialApp(title: 'Login', home: LoginScreen());
   }
 }
 
-class CadastroScreen extends StatefulWidget{
+class CadastroScreen extends StatefulWidget {
   const CadastroScreen({super.key});
 
   @override
   _CadastroScreen createState() => _CadastroScreen();
 }
 
-class _CadastroScreen extends State<CadastroScreen>{
-  final TextEditingController _cadastro_usuarioController = TextEditingController();
-  final TextEditingController _cadastro_senhaController = TextEditingController();
-  final TextEditingController _cadastro_emailController = TextEditingController();
+class _CadastroScreen extends State<CadastroScreen> {
+  final TextEditingController _cadastro_usuarioController =
+      TextEditingController();
+  final TextEditingController _cadastro_senhaController =
+      TextEditingController();
+  final TextEditingController _cadastro_emailController =
+      TextEditingController();
 
-  Future<void> _cadastrar() async{
-    final url = Uri.parse('http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php');
-    final response = await http.post(
-      url,
-      body: {
-        'oper' : 'Inserir',
-        'nm_usuario' : _cadastro_usuarioController.text,
-        'em_email' : _cadastro_emailController.text,
-        'pwd_usuario' : _cadastro_senhaController.text,
-      },
-    );
-    final Map<String, dynamic> data = json.decode(response.body);
-    final mensagem = data['Mensagem'] ?? 'Erro desconhecido';
+  Future<void> _cadastrar() async {
+    try {
+      final url = Uri.parse(
+        'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php',
+      );
+      final response = await http.post(
+        url,
+        body: {
+          'oper': 'Inserir',
+          'nm_usuario': _cadastro_usuarioController.text,
+          'em_email': _cadastro_emailController.text,
+          'pwd_usuario': _cadastro_senhaController.text,
+        },
+      );
+      // final Map<String, dynamic> data = json.decode(response.body);
+      // final mensagem = data['Mensagem'] ?? 'Erro desconhecido';
+      String mensagem;
+      try {
+        final Map<String, dynamic> data = json.decode(response.body);
+        mensagem = data['Mensagem'] ?? 'Erro desconhecido';
+      } catch (e) {
+        mensagem = 'Erro inesperado: ${response.body}';
+      }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Cadastro'),
-        content: Text(mensagem),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // fecha diálogo
-              if (data['Mensagem'] == 'ok') {
-                Navigator.of(context).pop(); // volta pra tela anterior (login)
-              }
-            },
-            child: Text('OK'),
-          ),
-        ])
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Cadastro'),
+          content: Text(mensagem),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // fecha diálogo
+                if (mensagem.contains('sucesso')) {
+                  Navigator.of(
+                    context,
+                  ).pop(); // volta pra tela anterior (login)
+                }
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Erro'),
+          content: Text('Erro ao cadastrar: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        ),
       );
     }
-    @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Cadastro de Usuário')),
@@ -74,7 +103,7 @@ class _CadastroScreen extends State<CadastroScreen>{
           children: [
             TextField(
               controller: _cadastro_usuarioController,
-              decoration: InputDecoration(labelText: 'Usuário'),
+              decoration: InputDecoration(labelText: 'Nome'),
             ),
             TextField(
               controller: _cadastro_emailController,
@@ -85,12 +114,9 @@ class _CadastroScreen extends State<CadastroScreen>{
               decoration: InputDecoration(labelText: 'Senha'),
               obscureText: true,
             ),
-            
+
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _cadastrar,
-              child: Text('Cadastrar'),
-            ),
+            ElevatedButton(onPressed: _cadastrar, child: Text('Cadastrar')),
           ],
         ),
       ),
@@ -110,60 +136,66 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _senhaController = TextEditingController();
 
   @override
-  
   // Método para realizar o login
   Future<void> _logar() async {
-    final url = Uri.parse('http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php');
-    final response = await http.post(
-      url,
-      body: {
-        'oper' : 'Login',
-        'em_email': _emailController.text,
-        'pwd_usuario': _senhaController.text,
-      },
-    );
-    final Map<String, dynamic> responseData = json.decode(response.body);
-    var mensagem = responseData['Mensagem'];
-    
-    if (mensagem == 'ok') {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('email', responseData['dados']['email'].toString());
-    mensagem = 'Login realizado com sucesso!';
-    } else {
-      mensagem = 'Email ou senha inválidos';
-    }
+  final url = Uri.parse(
+    'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php',
+  );
+  final response = await http.post(
+    url,
+    body: {
+      'oper': 'Login',
+      'em_email': _emailController.text,
+      'pwd_usuario': _senhaController.text,
+    },
+  );
 
-    // Exibe um diálogo com a mensagem de resultado
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Resultado'),
-        content: Text(mensagem),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('OK'),
-          ),
-        ],
-      ),
-    );
+  final Map<String, dynamic> responseData = json.decode(response.body);
+  var mensagem = responseData['Mensagem'];
 
-    // Se o login for bem-sucedido, armazena o email e nome com shared preferences e navega para a tela de perfil
-    if (responseData['Mensagem'] == 'ok') {
+  print('👉 response.body: ${response.body}');
+  print('👉 responseData: $responseData');
+
+  if (mensagem == 'ok') {
+    if (responseData['dados'] != null) {
+      final dados = responseData['dados'];
+      final email = dados['email']?.toString() ?? '';
+      final usuario = dados['usuario']?.toString() ?? '';
+
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('email', responseData['dados']['email'].toString());
-      await prefs.setString('usuario', responseData['dados']['usuario'].toString());
-      
+      await prefs.setString('email', email);
+      await prefs.setString('usuario', usuario);
+
       Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => PerfilScreen(
-        nomeUsuario: responseData['dados']['usuario'],
-        emailUsuario: responseData['dados']['email'],
+        MaterialPageRoute(
+          builder: (context) =>
+              PerfilScreen(nomeUsuario: usuario, emailUsuario: email),
         ),
-      ),
       );
+
+      mensagem = 'Login realizado com sucesso!';
+    } else {
+      mensagem = 'Dados do usuário ausentes na resposta.';
     }
+  } else {
+    mensagem = 'Email ou senha inválidos';
   }
+
+  // Exibe diálogo com a mensagem (sucesso ou erro)
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Resultado'),
+      content: Text(mensagem),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -184,18 +216,15 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: true,
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _logar,
-              child: Text('Logar'),
-            ),
+            ElevatedButton(onPressed: _logar, child: Text('Logar')),
             TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => CadastroScreen()),
-              );
-            },
-            child: Text('Criar conta'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => CadastroScreen()),
+                );
+              },
+              child: Text('Criar conta'),
             ),
           ],
         ),
@@ -204,13 +233,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-
-
 class PerfilScreen extends StatefulWidget {
   final String nomeUsuario;
   final String emailUsuario; // Torne o campo final
 
-  const PerfilScreen({super.key, required this.nomeUsuario, required this.emailUsuario});
+  const PerfilScreen({
+    super.key,
+    required this.nomeUsuario,
+    required this.emailUsuario,
+  });
 
   @override
   _PerfilScreenState createState() => _PerfilScreenState();
@@ -224,17 +255,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
   void initState() {
     super.initState();
     _nomeUsuario = widget.nomeUsuario;
-    _emailUsuario = widget.emailUsuario; // Inicializa o estado com os dados do widget
+    _emailUsuario =
+        widget.emailUsuario; // Inicializa o estado com os dados do widget
   }
 
   void _logout() async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.clear(); // ou prefs.remove('id_usuario');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // ou prefs.remove('id_usuario');
 
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (_) => LoginScreen()),
-  );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => LoginScreen()),
+    );
   }
 
   Future<void> _editarUsuario() async {
@@ -255,7 +287,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
           TextButton(
             onPressed: () async {
-              final url = Uri.parse('http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php');
+              final url = Uri.parse(
+                'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php',
+              );
               final response = await http.post(
                 url,
                 body: {
@@ -286,7 +320,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
               if (data['Mensagem'] == 'Usuário atualizado com sucesso') {
                 setState(() {
-                  _nomeUsuario = novoNomeController.text; // Atualize o estado local
+                  _nomeUsuario =
+                      novoNomeController.text; // Atualize o estado local
                 });
               }
             },
@@ -298,13 +333,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
   }
 
   Future<void> _excluirUsuario() async {
-    final url = Uri.parse('http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php');
+    final url = Uri.parse(
+      'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php',
+    );
     final response = await http.post(
       url,
-      body: {
-        'oper': 'Excluir',
-        'em_email': _emailUsuario,
-      },
+      body: {'oper': 'Excluir', 'em_email': _emailUsuario},
     );
 
     final Map<String, dynamic> data = json.decode(response.body);
@@ -325,7 +359,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
             },
             child: Text('OK'),
           ),
-          
         ],
       ),
     );
@@ -343,23 +376,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
             Text('Bem-vindo, $_nomeUsuario!', style: TextStyle(fontSize: 24)),
             SizedBox(height: 40),
             ElevatedButton(
-            onPressed: _editarUsuario,
-            child: Text('Editar Usuário'),
+              onPressed: _editarUsuario,
+              child: Text('Editar Usuário'),
             ),
             SizedBox(height: 20),
             ElevatedButton(
-            onPressed: _excluirUsuario, // Conecta o método de exclusão
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: Text('Excluir Usuário'),
+              onPressed: _excluirUsuario, // Conecta o método de exclusão
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: Text('Excluir Usuário'),
             ),
             ElevatedButton(
-            onPressed: _logout, // Conecta o método de logout
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: Text('Fazer Logout'),
+              onPressed: _logout, // Conecta o método de logout
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: Text('Fazer Logout'),
             ),
           ],
         ),

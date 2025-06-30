@@ -1,6 +1,6 @@
 {
-    "name": "to_do_list_app",
-    "short_name": "to_do_list_app",
+    "name": "trabalho_pdm_01",
+    "short_name": "trabalho_pdm_01",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

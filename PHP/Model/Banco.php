@@ -21,6 +21,8 @@
    o IP 192.168.20.18
     
 */
+
+
         function __construct($p_Driver  , $p_Host, 
                              $p_Porta   , $p_User, 
                              $p_Password, $p_Database)                          

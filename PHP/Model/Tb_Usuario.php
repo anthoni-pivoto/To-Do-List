@@ -60,7 +60,7 @@ class Tb_Usuario extends Base
         try
         {
             $stmt = $this->conexao->prepare(
-            "SELECT 1 FROM Tb_Usuario WHERE em_email = :email AND pwd_usuario = :senha"
+            "SELECT * FROM Tb_Usuario WHERE em_email = :email AND pwd_usuario = :senha"
             );
         
             $stmt->bindParam(':email', $this->em_email);
@@ -68,6 +68,12 @@ class Tb_Usuario extends Base
             $stmt->execute();
         
             $ret = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($ret) {
+            $this->id_usuario = $ret['id_usuario'];
+            $this->nm_usuario = $ret['nm_usuario'];
+            $this->em_email = $ret['em_email'];
+        }
         }
         catch(Exception $e)
         {
@@ -99,8 +105,8 @@ class Tb_Usuario extends Base
         } 
         catch (Exception $e) 
         {
-      
-            $stmt = $this->conexao->prepare("INSERT INTO TB_USUARIO(id_usuario, nm_usuario,pwd_usuario, em_email) VALUES (nextval('seq_id_user'), :NmUsuario, :PwdUsuario, :email)");
+            try{
+                $stmt = $this->conexao->prepare("INSERT INTO TB_USUARIO(id_usuario, nm_usuario,pwd_usuario, em_email) VALUES (nextval('seq_id_user'), :NmUsuario, :PwdUsuario, :email)");
             $stmt->bindValue(':email', $this->em_email, PDO::PARAM_STR);        
             $stmt->bindValue(':NmUsuario' , $this->nm_usuario , PDO::PARAM_STR);
             $stmt->bindValue(':PwdUsuario' , $this->pwd_usuario , PDO::PARAM_STR);
@@ -111,6 +117,11 @@ class Tb_Usuario extends Base
             $this->conexao->commit(); 
     
             $this->banco->setMensagem(1, "Usuario incluso com sucesso");
+            } catch (Exception $e) 
+            {
+                echo json_encode(['Mensagem']["Erro ao inserir usuario: " . $e->getMessage()]);
+            }
+            
         }
     }
 
@@ -179,8 +190,9 @@ class Tb_Usuario extends Base
         {
             $this->verificaLogin();
             $this->banco->setMensagem(1, "ok");
-            $this->banco->setDados(1, ["email" => $this->em_email]);
-            $this->banco->setDados(1, ["usuario" => $this->nm_usuario]);
+            $this->banco->setDados(1, ["email" => $this->em_email,
+                                       "usuario" => $this->nm_usuario,
+                                       "id_usuario" => $this->id_usuario]);
         }
         catch (Exception $e) 
         {
