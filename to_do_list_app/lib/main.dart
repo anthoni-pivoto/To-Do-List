@@ -207,21 +207,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
 class PerfilScreen extends StatefulWidget {
-  final String nomeUsuario; // Torne o campo final
+  final String nomeUsuario;
+  final String emailUsuario; // Torne o campo final
 
-  const PerfilScreen({super.key, required this.nomeUsuario});
+  const PerfilScreen({super.key, required this.nomeUsuario, required this.emailUsuario});
 
   @override
   _PerfilScreenState createState() => _PerfilScreenState();
 }
 
 class _PerfilScreenState extends State<PerfilScreen> {
-  late String _nomeUsuario; // Variável local para gerenciar o estado
+  late String _nomeUsuario;
+  late String _emailUsuario; // Variável local para gerenciar o estado
 
   @override
   void initState() {
     super.initState();
-    _nomeUsuario = widget.nomeUsuario; // Inicialize com o valor do widget
+    _nomeUsuario = widget.nomeUsuario;
+    _emailUsuario = widget.emailUsuario; // Inicializa o estado com os dados do widget
   }
 
   void _logout() async {
@@ -257,7 +260,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 url,
                 body: {
                   'oper': 'Alterar',
-                  'nm_usuario': _nomeUsuario,
+                  'em_email': _emailUsuario,
                   'novo_nome': novoNomeController.text,
                 },
               );
@@ -300,7 +303,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       url,
       body: {
         'oper': 'Excluir',
-        'nm_usuario': _nomeUsuario,
+        'em_email': _emailUsuario,
       },
     );
 
@@ -337,7 +340,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Bem-vindo, ${widget.nomeUsuario}!', style: TextStyle(fontSize: 24)),
+            Text('Bem-vindo, $_nomeUsuario!', style: TextStyle(fontSize: 24)),
             SizedBox(height: 40),
             ElevatedButton(
             onPressed: _editarUsuario,

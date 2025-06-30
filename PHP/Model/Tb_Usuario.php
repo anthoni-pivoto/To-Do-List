@@ -180,6 +180,7 @@ class Tb_Usuario extends Base
             $this->verificaLogin();
             $this->banco->setMensagem(1, "ok");
             $this->banco->setDados(1, ["email" => $this->em_email]);
+            $this->banco->setDados(1, ["usuario" => $this->nm_usuario]);
         }
         catch (Exception $e) 
         {
