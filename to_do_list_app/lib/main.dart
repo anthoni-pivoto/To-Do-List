@@ -161,15 +161,17 @@ class _LoginScreenState extends State<LoginScreen> {
       final dados = responseData['dados'];
       final email = dados['email']?.toString() ?? '';
       final usuario = dados['usuario']?.toString() ?? '';
+      final idUsuario = dados['id_usuario']?.toString() ?? '';
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('email', email);
       await prefs.setString('usuario', usuario);
+      await prefs.setString('id_usuario', idUsuario);
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) =>
-              PerfilScreen(nomeUsuario: usuario, emailUsuario: email),
+              PerfilScreen(nomeUsuario: usuario, emailUsuario: email, idUsuario: idUsuario),
         ),
       );
 
@@ -235,12 +237,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
 class PerfilScreen extends StatefulWidget {
   final String nomeUsuario;
-  final String emailUsuario; // Torne o campo final
+  final String emailUsuario;
+  final String idUsuario; // Torne o campo final
 
   const PerfilScreen({
     super.key,
     required this.nomeUsuario,
     required this.emailUsuario,
+    required this.idUsuario,
   });
 
   @override
@@ -249,14 +253,15 @@ class PerfilScreen extends StatefulWidget {
 
 class _PerfilScreenState extends State<PerfilScreen> {
   late String _nomeUsuario;
-  late String _emailUsuario; // Variável local para gerenciar o estado
+  late String _emailUsuario;
+  late String _idUsuario; // Variável local para gerenciar o estado
 
   @override
   void initState() {
     super.initState();
     _nomeUsuario = widget.nomeUsuario;
-    _emailUsuario =
-        widget.emailUsuario; // Inicializa o estado com os dados do widget
+    _emailUsuario = widget.emailUsuario;
+    _idUsuario = widget.idUsuario; // Inicializa o estado com os dados do widget
   }
 
   void _logout() async {
@@ -396,3 +401,144 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 }
+
+class TaskListScreen extends StatefulWidget {
+  @override
+  
+  State<TaskListScreen> createState() => _TaskListScreenState();
+}
+
+class _TaskListScreenState extends State<TaskListScreen> {
+
+   Future<List<Map<String, dynamic>>> _buscarTarefas() async {
+    final prefs = await SharedPreferences.getInstance();
+    final idUsuario = prefs.getString('id_usuario') ?? '';
+
+    final url = Uri.parse(
+      'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudTarefa.php');
+      final response = await http.post(url, body: {
+      'oper': 'Listar',
+      'id_usuario': idUsuario,
+      });
+      final Map<String, dynamic> data = json.decode(response.body);
+      if (data['Mensagem'] == 'ok') {
+        return List<Map<String, dynamic>>.from(data['dados'] ?? []);
+      } else {
+        throw Exception('Erro ao buscar tarefas: ${data['Mensagem']}');
+      }
+    }
+
+    List<Map<String, dynamic>> _tarefas = _buscarTarefas();
+
+
+  void _mostrarDialogCadastro() {
+    final nomeController = TextEditingController();
+    final descController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Nova Tarefa'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: nomeController,
+                decoration: InputDecoration(labelText: 'Nome da Tarefa'),
+              ),
+              TextField(
+                controller: descController,
+                decoration: InputDecoration(labelText: 'Descrição da Tarefa'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: Text('Cancelar'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          ElevatedButton(
+            child: Text('Cadastrar'),
+            onPressed: () async {
+              final nome = nomeController.text;
+              final descricao = descController.text;
+
+              // 🧠 Recupera id_usuario ou outro identificador do usuário
+              final prefs = await SharedPreferences.getInstance();
+              final usuario = prefs.getString('usuario') ?? '';
+
+              final url = Uri.parse(
+                'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudTarefa.php',
+              );
+              final response = await http.post(url, body: {
+                'oper': 'Inserir',
+                'titulo': nome,
+                'descricao': descricao,
+                'usuario': usuario, // ou id_usuario, se estiver salvo
+              });
+
+              String mensagem;
+              try {
+                final jsonData = json.decode(response.body);
+                mensagem = jsonData['Mensagem'] ?? 'Erro desconhecido';
+              } catch (_) {
+                mensagem = 'Erro inesperado: ${response.body}';
+              }
+
+              if (mensagem.contains('sucesso')) {
+                setState(() {
+                  _tarefas.add({'titulo': nome, 'descricao': descricao});
+                });
+              }
+
+              Navigator.of(context).pop(); // fecha o diálogo
+
+              // feedback final
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Cadastro'),
+                  content: Text(mensagem),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Tarefas')),
+      body: _tarefas.isEmpty
+          ? Center(child: Text('Nenhuma tarefa ainda.'))
+          : ListView.builder(
+              itemCount: _tarefas.length,
+              itemBuilder: (context, index) => ListTile(
+                title: Text(_tarefas[index]['titulo'] ?? ''),
+                subtitle: Text(_tarefas[index]['descricao'] ?? ''),
+              ),
+            ),
+      floatingActionButton: Align(
+        alignment: Alignment.bottomLeft,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 32.0, bottom: 16),
+          child: FloatingActionButton(
+            onPressed: _mostrarDialogCadastro,
+            child: Icon(Icons.add),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

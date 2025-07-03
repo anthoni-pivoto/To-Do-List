@@ -17,12 +17,12 @@ class Tb_Tarefa extends Base
     }
 
     // Setters
-    function SetIdTarefa($id) {
-        $this->id_tarefa = $id;
+    function SetIdTarefa($i_id_tarefa) {
+        $this->id_tarefa = $i_id_tarefa;
     }
 
-    function SetIdUsuario($id) {
-        $this->id_usuario = $id;
+    function SetIdUsuario($i_id_usuario) {
+        $this->id_usuario = $i_id_usuario;
     }
 
     function SetNmTarefa($nome) {
@@ -47,15 +47,13 @@ class Tb_Tarefa extends Base
         try 
         {
             $stmt = $this->conexao->prepare("
-                INSERT INTO tb_tarefa (id_usuario, nm_tarefa, txt_descricao, dt_criacao, status)
-                VALUES (:id_usuario, :nm_tarefa, :txt_descricao, :dt_criacao, :status)
+                INSERT INTO tb_tarefa (id_usuario, id_tarefa, nm_tarefa, txt_descricao, status)
+                VALUES (:id_usuario, nextval('seq_id_tarefa'), :nm_tarefa, :txt_descricao, :status)
             ");
             $stmt->bindValue(':id_usuario', $this->id_usuario, PDO::PARAM_INT);
             $stmt->bindValue(':nm_tarefa', $this->nm_tarefa, PDO::PARAM_STR);
             $stmt->bindValue(':txt_descricao', $this->txt_descricao, PDO::PARAM_STR);
-            $stmt->bindValue(':dt_criacao', $this->dt_criacao); // Deve ser string 'Y-m-d H:i:s'
             $stmt->bindValue(':status', $this->status, PDO::PARAM_BOOL);
-
             $this->conexao->beginTransaction();
             $stmt->execute();
             $this->conexao->commit();
@@ -76,13 +74,11 @@ class Tb_Tarefa extends Base
                 UPDATE tb_tarefa SET 
                     nm_tarefa = :nm_tarefa, 
                     txt_descricao = :txt_descricao,
-                    dt_criacao = :dt_criacao,
                     status = :status
                 WHERE id_tarefa = :id_tarefa
             ");
             $stmt->bindValue(':nm_tarefa', $this->nm_tarefa, PDO::PARAM_STR);
             $stmt->bindValue(':txt_descricao', $this->txt_descricao, PDO::PARAM_STR);
-            $stmt->bindValue(':dt_criacao', $this->dt_criacao);
             $stmt->bindValue(':status', $this->status, PDO::PARAM_BOOL);
             $stmt->bindValue(':id_tarefa', $this->id_tarefa, PDO::PARAM_INT);
 
