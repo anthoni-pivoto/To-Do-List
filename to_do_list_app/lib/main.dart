@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Login', home: LoginScreen());
+    return MaterialApp(title: 'Lista de tarefas', home: TaskListScreen());
   }
 }
 
@@ -138,66 +138,68 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   // Método para realizar o login
   Future<void> _logar() async {
-  final url = Uri.parse(
-    'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php',
-  );
-  final response = await http.post(
-    url,
-    body: {
-      'oper': 'Login',
-      'em_email': _emailController.text,
-      'pwd_usuario': _senhaController.text,
-    },
-  );
+    final url = Uri.parse(
+      'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudUsuario.php',
+    );
+    final response = await http.post(
+      url,
+      body: {
+        'oper': 'Login',
+        'em_email': _emailController.text,
+        'pwd_usuario': _senhaController.text,
+      },
+    );
 
-  final Map<String, dynamic> responseData = json.decode(response.body);
-  var mensagem = responseData['Mensagem'];
+    final Map<String, dynamic> responseData = json.decode(response.body);
+    var mensagem = responseData['Mensagem'];
 
-  print('👉 response.body: ${response.body}');
-  print('👉 responseData: $responseData');
+    if (mensagem == 'ok') {
+      if (responseData['dados'] != null) {
+        final dados = responseData['dados'];
+        final email = dados['email']?.toString() ?? '';
+        final usuario = dados['usuario']?.toString() ?? '';
+        final idUsuario = dados['id_usuario']?.toString() ?? '';
 
-  if (mensagem == 'ok') {
-    if (responseData['dados'] != null) {
-      final dados = responseData['dados'];
-      final email = dados['email']?.toString() ?? '';
-      final usuario = dados['usuario']?.toString() ?? '';
-      final idUsuario = dados['id_usuario']?.toString() ?? '';
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('email', email);
+        await prefs.setString('usuario', usuario);
+        await prefs.setString('id_usuario', idUsuario);
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('email', email);
-      await prefs.setString('usuario', usuario);
-      await prefs.setString('id_usuario', idUsuario);
+        print('Usuário logado: $usuario, Email: $email, ID: $idUsuario');
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) =>
-              PerfilScreen(nomeUsuario: usuario, emailUsuario: email, idUsuario: idUsuario),
-        ),
-      );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => PerfilScreen(
+              nomeUsuario: usuario,
+              emailUsuario: email,
+              idUsuario: idUsuario,
+            ),
+          ),
+        );
 
-      mensagem = 'Login realizado com sucesso!';
-    } else {
-      mensagem = 'Dados do usuário ausentes na resposta.';
+        mensagem = 'Login realizado com sucesso!';
+      } 
     }
-  } else {
-    mensagem = 'Email ou senha inválidos';
-  }
+    else {
+        mensagem = 'Email ou senha inválidos.';
+      }
+    
 
-  // Exibe diálogo com a mensagem (sucesso ou erro)
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text('Resultado'),
-      content: Text(mensagem),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('OK'),
-        ),
-      ],
-    ),
-  );
-}
+    // Exibe diálogo com a mensagem (sucesso ou erro)
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Resultado'),
+        content: Text(mensagem),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -390,6 +392,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: Text('Excluir Usuário'),
             ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TaskListScreen()),
+                );
+              }, // Conectapara página de listagem
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: Text('Tarefas'),
+            ),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: _logout, // Conecta o método de logout
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -403,36 +417,60 @@ class _PerfilScreenState extends State<PerfilScreen> {
 }
 
 class TaskListScreen extends StatefulWidget {
+  const TaskListScreen({super.key});
   @override
-  
   State<TaskListScreen> createState() => _TaskListScreenState();
 }
 
 class _TaskListScreenState extends State<TaskListScreen> {
+  late String _idUsuario;
+  bool _carregando = true;
+  late Future<List<Map<String, dynamic>>> _futureTarefas;
 
-   Future<List<Map<String, dynamic>>> _buscarTarefas() async {
+  @override
+  void initState() {
+    super.initState();
+    _verificaLogin();
+  }
+
+  Future<void> _verificaLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final idUser = prefs.getString('id_usuario') ?? '';
+
+    if (idUser.isEmpty || idUser == 'null' || idUser == '0') {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
+    } else {
+      setState(() {
+        _idUsuario = idUser;
+        _carregando = false;
+        _futureTarefas = _buscarTarefas(); // recarrega a lista de tarefas
+      });
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _buscarTarefas() async {
     final prefs = await SharedPreferences.getInstance();
     final idUsuario = prefs.getString('id_usuario') ?? '';
 
     final url = Uri.parse(
-      'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudTarefa.php');
-      final response = await http.post(url, body: {
-      'oper': 'Listar',
-      'id_usuario': idUsuario,
-      });
-      final Map<String, dynamic> data = json.decode(response.body);
-      if (data['Mensagem'] == 'ok') {
-        return List<Map<String, dynamic>>.from(data['dados'] ?? []);
-      } else {
-        throw Exception('Erro ao buscar tarefas: ${data['Mensagem']}');
-      }
+      'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudTarefa.php',
+    );
+    final response = await http.post(
+      url,
+      body: {'oper': 'Listar', 'id_usuario': idUsuario},
+    );
+    final Map<String, dynamic> data = json.decode(response.body);
+    if (data['Mensagem'] == 'ok') {
+      return List<Map<String, dynamic>>.from(data['dados'] ?? []);
+    } else {
+      throw Exception('Erro ao buscar tarefas: ${data['Mensagem']}');
     }
-
-    List<Map<String, dynamic>> _tarefas = _buscarTarefas();
-
+  }
 
   void _mostrarDialogCadastro() {
-    final nomeController = TextEditingController();
+    final _cadastro_nomeTarefaController = TextEditingController();
     final descController = TextEditingController();
 
     showDialog(
@@ -443,7 +481,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
           child: Column(
             children: [
               TextField(
-                controller: nomeController,
+                controller: _cadastro_nomeTarefaController,
                 decoration: InputDecoration(labelText: 'Nome da Tarefa'),
               ),
               TextField(
@@ -461,23 +499,24 @@ class _TaskListScreenState extends State<TaskListScreen> {
           ElevatedButton(
             child: Text('Cadastrar'),
             onPressed: () async {
-              final nome = nomeController.text;
-              final descricao = descController.text;
+              final nome = _cadastro_nomeTarefaController.text;
 
-              // 🧠 Recupera id_usuario ou outro identificador do usuário
+              final descricao = descController.text;
               final prefs = await SharedPreferences.getInstance();
-              final usuario = prefs.getString('usuario') ?? '';
+              final usuario = prefs.getString('id_usuario') ?? '';
 
               final url = Uri.parse(
                 'http://200.19.1.19/20222GR.ADS0010/exemploPDM-I/Controller/CrudTarefa.php',
               );
-              final response = await http.post(url, body: {
-                'oper': 'Inserir',
-                'titulo': nome,
-                'descricao': descricao,
-                'usuario': usuario, // ou id_usuario, se estiver salvo
-              });
-
+              final response = await http.post(
+                url,
+                body: {
+                  'oper': 'Inserir',
+                  'nm_tarefa': nome,
+                  'txt_descricao': descricao,
+                  'id_usuario': usuario, // ou id_usuario, se estiver salvo
+                },
+              );
               String mensagem;
               try {
                 final jsonData = json.decode(response.body);
@@ -485,15 +524,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
               } catch (_) {
                 mensagem = 'Erro inesperado: ${response.body}';
               }
-
-              if (mensagem.contains('sucesso')) {
-                setState(() {
-                  _tarefas.add({'titulo': nome, 'descricao': descricao});
-                });
-              }
+              print('👉 response.body: ${response.body}');
 
               Navigator.of(context).pop(); // fecha o diálogo
 
+              setState(() {
+                _futureTarefas =
+                    _buscarTarefas(); // ✅ recarrega lista após inserir
+              });
               // feedback final
               showDialog(
                 context: context,
@@ -515,19 +553,66 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // ou prefs.remove('id_usuario');
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => LoginScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_carregando) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
-      appBar: AppBar(title: Text('Tarefas')),
-      body: _tarefas.isEmpty
-          ? Center(child: Text('Nenhuma tarefa ainda.'))
-          : ListView.builder(
-              itemCount: _tarefas.length,
-              itemBuilder: (context, index) => ListTile(
-                title: Text(_tarefas[index]['titulo'] ?? ''),
-                subtitle: Text(_tarefas[index]['descricao'] ?? ''),
-              ),
-            ),
+      appBar: AppBar(
+        title: Text('Minhas Tarefas'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _logout, // Conecta o método de logout
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _futureTarefas,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Erro: ${snapshot.error}'));
+          }
+          final tarefas = snapshot.data ?? [];
+          if (tarefas.isEmpty) {
+            return Center(child: Text('Nenhuma tarefa encontrada.'));
+          }
+          return ListView.builder(
+            itemCount: tarefas.length,
+            itemBuilder: (context, index) {
+              final tarefa = tarefas[index];
+              return ListTile(
+                title: Text(tarefa['nm_tarefa'] ?? ''),
+                subtitle: Text(tarefa['txt_descricao'] ?? ''),
+                trailing: Text(
+                  tarefa['dt_criacao']?.toString().substring(0, 10) ?? '',
+                ),
+                leading: Icon(
+                  tarefa['status'] == true
+                      ? Icons.check_circle
+                      : Icons.circle_outlined,
+                  color: tarefa['status'] == true ? Colors.green : Colors.grey,
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: Align(
         alignment: Alignment.bottomLeft,
         child: Padding(
@@ -541,4 +626,3 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 }
-

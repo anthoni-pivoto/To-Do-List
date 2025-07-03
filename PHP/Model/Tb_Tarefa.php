@@ -58,7 +58,7 @@ class Tb_Tarefa extends Base
             $stmt->execute();
             $this->conexao->commit();
 
-            $this->banco->setMensagem(1, "Tarefa inserida com sucesso");
+            $this->banco->setMensagem(1, "ok");
         } 
         catch (Exception $e) 
         {
@@ -135,20 +135,28 @@ class Tb_Tarefa extends Base
     }
 
     public function ListarPorUsuario()
-    {
+    {   
         try 
         {
+            if (empty($this->id_usuario)) {
+            $this->banco->setMensagem(0, "ID do usuário não foi informado.");
+            $this->banco->setDados(0, []);
+            exit;
+            }
+
             $stmt = $this->conexao->prepare("SELECT * FROM tb_tarefa WHERE id_usuario = :id_usuario ORDER BY dt_criacao DESC");
             $stmt->bindValue(':id_usuario', $this->id_usuario, PDO::PARAM_INT);
             $stmt->execute();
-            $ret = $stmt->fetchAll();
-
-            $this->banco->setMensagem(1, "Tarefas listadas com sucesso");
+            $ret = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $this->banco->setMensagem(1, "ok");
             $this->banco->setDados(count($ret), $ret);
+
         } 
         catch (Exception $e) 
         {
-            throw new Exception($e->getMessage());
+            $this->banco->setMensagem(0, "Erro ao listar tarefas: " . $e->getMessage());
+            $this->banco->setDados(0, []);
         }
     }
 }

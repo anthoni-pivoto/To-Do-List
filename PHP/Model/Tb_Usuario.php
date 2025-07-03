@@ -69,11 +69,16 @@ class Tb_Usuario extends Base
         
             $ret = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($ret) {
+            print($ret);
+            if ($ret[`id_usuario`] != null && $ret['id_usuario'] != ""){
             $this->id_usuario = $ret['id_usuario'];
             $this->nm_usuario = $ret['nm_usuario'];
             $this->em_email = $ret['em_email'];
-        }
+            }
+            else
+            {
+                throw new Exception("Usuario ou senha incorretos");
+            }
         }
         catch(Exception $e)
         {
